@@ -37,17 +37,18 @@
  */
 typedef enum 
 {
-    CMD_EMPTY = 0,           /**< No command. */ 
-    CMD_STOP_CUTTER,         /**< Stop the cutter. */
-    CMD_START_CUTTER,        /**< Start the cutter. */
-    CMD_DISTANCE,            /**< Send the distance measure. */
-    CMD_RPMS,                /**< Send RPMs measure. */
-    CMD_LINEAR_MOTOR_UP,     /**< Put the linear motors in up state. */
-    CMD_LINEAR_MOTOR_DW,     /**< Put the linear motors in down state. */
-    CMD_START_DISPENSER,     /**< Start the dispenser. */
-    CMD_STOP_DISPENSER,      /**< Stop the dispenser. */
-    CMD_ERROR,              /**< Command no identified. */
-}state_cmd_esp32_e;
+    SOWER_CMD_EMPTY = 0,           /**< No command. */ 
+    SOWER_CMD_STOP_CUTTER,         /**< Stop the cutter. */
+    SOWER_CMD_START_CUTTER,        /**< Start the cutter. */
+    SOWER_CMD_DISTANCE,            /**< Send the distance measure. */
+    SOWER_CMD_RPMS,                /**< Send RPMs measure. */
+    SOWER_CMD_LINEAR_MOTOR_UP,     /**< Put the linear motors in up state. */
+    SOWER_CMD_LINEAR_MOTOR_DOWN,     /**< Put the linear motors in down state. */
+    SOWER_CMD_START_DISPENSER,     /**< Start the dispenser. */
+    SOWER_CMD_STOP_DISPENSER,      /**< Stop the dispenser. */
+    SOWER_CMD_ECHO_SOWER,
+    SOWER_CMD_ERROR,              /**< Command no identified. */
+} sower_cmd_e;
 
 
 /**
@@ -57,9 +58,9 @@ typedef enum
  */
 typedef struct
 {
-    state_cmd_esp32_e code; /**< Command.*/
+    sower_cmd_e code; /**< Command.*/
     float arg;              /**< Arguments. */
-} data_center_esp32_t;
+} sower_cmd_t;
 
 
 /** 
@@ -67,45 +68,72 @@ typedef struct
  */
 typedef enum 
 {
-    EMPTY_CMD = 0,      /**< Empty cmd */
-    ERROR_CMD,          /**< Error CMD. */
-    CUTTER_STARTED,     /**< Cutter started. */
-    CUTTER_STOPPED,     /**< Cutter stopped. */
-    CUTTER_UP,          /**< Linear motors set in up position. */
-    CUTTER_DOWN,        /**< Linear motors set in down position. */
-    SEED_DISTANCE,      /**< Distance measure. */
-    DISPENSER_STARTED,  /**< Dispenser started. */
-    DISPENSER_STOPPED,  /**< Dispenser stopped. */
-    TEMPERATURE_MEASURE, /**< Temperature measure */
-    HUMEDITY_MEASURE,   /**< Humedity measure */
-    CUTTER_RPM_MEASURE, /**< Cutter rpm measure */
-}cutter_disk_events_cmd_e;
+    SOWER_EVENT_EMPTY_CMD = 0,      /**< Empty cmd */
+    SOWER_EVENT_ERROR,          /**< Error CMD. */
+    SOWER_EVENT_CUTTER_STARTED,     /**< Cutter started. */
+    SOWER_EVENT_CUTTER_STOPPED,     /**< Cutter stopped. */
+    SOWER_EVENT_CUTTER_UP,          /**< Linear motors set in up position. */
+    SOWER_EVENT_CUTTER_DOWN,        /**< Linear motors set in down position. */
+    SOWER_EVENT_SEED_DISTANCE,      /**< Distance measure. */
+    SOWER_EVENT_DISPENSER_STARTED,  /**< Dispenser started. */
+    SOWER_EVENT_DISPENSER_STOPPED,  /**< Dispenser stopped. */
+    SOWER_EVENT_TEMPERATURE_MEASURE, /**< Temperature measure */
+    SOWER_EVENT_HUMEDITY_MEASURE,   /**< Humedity measure */
+    SOWER_EVENT_CUTTER_RPM_MEASURE, /**< Cutter rpm measure */
+    SOWER_EVENT_ECHO_MSG,
+} sower_events_e;
 
 /**
  * @brief enumeration for ESP32 errors.
  */
 typedef enum
 {
-    NONE = 0,               /**< No error.*/
-    CUTTER_ERROR,           /**< Error in cutter.*/
-    CUTTER_MOV_ERROR,       /**< Error in linear motors.*/
-    DISPENCER_ERROR,        /**< Error in dispenser.*/
-    SEED_DISTANCE_ERROR,    /**< Error in distance measure.*/
-    HUMEDITY_ERROR,         /**< Error in humedity measure. */
-    TEMPERATURE_ERROR,      /**< Error in temperature measure. */
+    SOWER_ERROR_NONE = 0,               /**< No error.*/
+    SOWER_ERROR_CUTTER_DONT_START,
+    SOWER_ERROR_CUTTER_DONT_STOP,
+    SOWER_ERROR_LMOTOR_DONT_RISE,
+    SOWER_ERROR_LMOTOR_DONT_DESCEND,
+    SOWER_ERROR_UNKNOWN_CMD,
+    SOWER_ERROR_DISPENCER_ERROR,        /**< Error in dispenser.*/
+    SOWER_ERROR_SEED_DISTANCE_ERROR,    /**< Error in distance measure.*/
+    SOWER_ERROR_HUMEDITY_ERROR,         /**< Error in humedity measure. */
+    SOWER_ERROR_TEMPERATURE_ERROR,      /**< Error in temperature measure. */
 
-}cutter_disk_error_e;
+} sower_error_e;
 
+/**
+ * @brief Get the string name of a sower_cmd_e value.
+ *
+ * @param cmd The sower_cmd_e value.
+ * @return The string name of the command.
+ */
+static inline const char* sower_cmd_name(sower_cmd_e cmd)
+{
+    switch (cmd) {
+        case SOWER_CMD_EMPTY:            return "SOWER_CMD_EMPTY";
+        case SOWER_CMD_STOP_CUTTER:      return "SOWER_CMD_STOP_CUTTER";
+        case SOWER_CMD_START_CUTTER:     return "SOWER_CMD_START_CUTTER";
+        case SOWER_CMD_DISTANCE:         return "SOWER_CMD_DISTANCE";
+        case SOWER_CMD_RPMS:             return "SOWER_CMD_RPMS";
+        case SOWER_CMD_LINEAR_MOTOR_UP:  return "SOWER_CMD_LINEAR_MOTOR_UP";
+        case SOWER_CMD_LINEAR_MOTOR_DOWN:return "SOWER_CMD_LINEAR_MOTOR_DOWN";
+        case SOWER_CMD_START_DISPENSER:  return "SOWER_CMD_START_DISPENSER";
+        case SOWER_CMD_STOP_DISPENSER:   return "SOWER_CMD_STOP_DISPENSER";
+        case SOWER_CMD_ECHO_SOWER:       return "SOWER_CMD_ECHO_SOWER";
+        case SOWER_CMD_ERROR:            return "SOWER_CMD_ERROR";
+        default:                         return "UNKNOWN_SOWER_CMD";
+    }
+}
 
 /**
  * @brief Structure that contains information related to events and errors.
  */
 typedef struct 
 {
-    cutter_disk_events_cmd_e event;     /**< ESP32 event. */ 
-    cutter_disk_error_e error;          /**< Error code. */
+    sower_events_e event;     /**< ESP32 event. */ 
+    sower_error_e error;          /**< Error code. */
     float arg;                          /**< Arg info. */
-}cutter_disk_event_t; 
+} sower_event_t; 
 
 
 /**

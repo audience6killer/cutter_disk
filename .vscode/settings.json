@@ -9,5 +9,8 @@
   "idf.toolsPath": "/home/vill4in/.espressif",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
-  }
+  },
+  "editor.wordWrap": "on",
+  "idf.flashType": "UART"
+
 }
