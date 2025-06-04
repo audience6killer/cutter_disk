@@ -250,6 +250,8 @@ static void cutter_pid_task(void *args)
     float error = 0.0;
     float new_speed = 0.0;
 
+    rpm_queue = xQueueCreate(1, sizeof(float));
+
     while(true)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);

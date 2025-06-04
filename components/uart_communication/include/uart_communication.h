@@ -28,13 +28,6 @@
 #define WAIT_QUEUE_SEND_ESP32                   100
 
 
-/**
- * @brief Enumeration for ESP32 commands.
- * 
- * This enum defines the different commands that can be managed by the ESP32
- * to control various components such as the cutter, linear motors and dispenser.
- * 
- */
 typedef enum 
 {
     SOWER_CMD_EMPTY = 0,           /**< No command. */ 
@@ -49,7 +42,6 @@ typedef enum
     SOWER_CMD_ECHO_SOWER,
     SOWER_CMD_ERROR,              /**< Command no identified. */
 } sower_cmd_e;
-
 
 /**
  * @brief Structure for received commands
@@ -101,15 +93,54 @@ typedef enum
 
 } sower_error_e;
 
+
+/**
+ * @brief Structure that contains information related to events and errors.
+ */
+typedef struct 
+{
+    sower_events_e event;     /**< ESP32 event. */ 
+    sower_error_e error;          /**< Error code. */
+    float arg;                          /**< Arg info. */
+} sower_event_t; 
+
+/**
+ * @brief Get the string name of a sower_events_e value.
+ *
+ * @param event The sower_events_e value.
+ * @return const char* The name of the event.
+ */
+static inline const char* sower_event_name(sower_events_e event)
+{
+    switch (event)
+    {
+        case SOWER_EVENT_EMPTY_CMD:          return "SOWER_EVENT_EMPTY_CMD";
+        case SOWER_EVENT_ERROR:              return "SOWER_EVENT_ERROR";
+        case SOWER_EVENT_CUTTER_STARTED:     return "SOWER_EVENT_CUTTER_STARTED";
+        case SOWER_EVENT_CUTTER_STOPPED:     return "SOWER_EVENT_CUTTER_STOPPED";
+        case SOWER_EVENT_CUTTER_UP:          return "SOWER_EVENT_CUTTER_UP";
+        case SOWER_EVENT_CUTTER_DOWN:        return "SOWER_EVENT_CUTTER_DOWN";
+        case SOWER_EVENT_SEED_DISTANCE:      return "SOWER_EVENT_SEED_DISTANCE";
+        case SOWER_EVENT_DISPENSER_STARTED:  return "SOWER_EVENT_DISPENSER_STARTED";
+        case SOWER_EVENT_DISPENSER_STOPPED:  return "SOWER_EVENT_DISPENSER_STOPPED";
+        case SOWER_EVENT_TEMPERATURE_MEASURE:return "SOWER_EVENT_TEMPERATURE_MEASURE";
+        case SOWER_EVENT_HUMEDITY_MEASURE:   return "SOWER_EVENT_HUMEDITY_MEASURE";
+        case SOWER_EVENT_CUTTER_RPM_MEASURE: return "SOWER_EVENT_CUTTER_RPM_MEASURE";
+        case SOWER_EVENT_ECHO_MSG:           return "SOWER_EVENT_ECHO_MSG";
+        default:                             return "UNKNOWN_EVENT";
+    }
+}
+
 /**
  * @brief Get the string name of a sower_cmd_e value.
  *
  * @param cmd The sower_cmd_e value.
- * @return The string name of the command.
+ * @return const char* The name of the command.
  */
 static inline const char* sower_cmd_name(sower_cmd_e cmd)
 {
-    switch (cmd) {
+    switch (cmd)
+    {
         case SOWER_CMD_EMPTY:            return "SOWER_CMD_EMPTY";
         case SOWER_CMD_STOP_CUTTER:      return "SOWER_CMD_STOP_CUTTER";
         case SOWER_CMD_START_CUTTER:     return "SOWER_CMD_START_CUTTER";
@@ -121,19 +152,9 @@ static inline const char* sower_cmd_name(sower_cmd_e cmd)
         case SOWER_CMD_STOP_DISPENSER:   return "SOWER_CMD_STOP_DISPENSER";
         case SOWER_CMD_ECHO_SOWER:       return "SOWER_CMD_ECHO_SOWER";
         case SOWER_CMD_ERROR:            return "SOWER_CMD_ERROR";
-        default:                         return "UNKNOWN_SOWER_CMD";
+        default:                         return "UNKNOWN_CMD";
     }
 }
-
-/**
- * @brief Structure that contains information related to events and errors.
- */
-typedef struct 
-{
-    sower_events_e event;     /**< ESP32 event. */ 
-    sower_error_e error;          /**< Error code. */
-    float arg;                          /**< Arg info. */
-} sower_event_t; 
 
 
 /**

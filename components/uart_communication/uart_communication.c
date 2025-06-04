@@ -207,6 +207,8 @@ static void esp32_uart_transmit_task(void *pvParameters)
         {
             //printf("Writing data to uart!\n");
             // Writes information to the UART port
+            const char *event_name = sower_event_name(received_data.event);
+            printf("Event to send to uart: %s\n", event_name);
             uart_write_bytes(ESP32_UART_PORT, (uint8_t *)&received_data, sizeof(received_data));
 
             // Cleans result.

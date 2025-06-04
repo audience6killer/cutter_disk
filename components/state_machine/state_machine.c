@@ -76,12 +76,13 @@ esp_err_t sower_stop_cutter_event_handler(void)
         .arg = 0.0f,
         .error = SOWER_ERROR_NONE,
         .event = SOWER_EVENT_EMPTY_CMD};
+
 #ifdef TEST_RPMS
     stop_test_rpms();
 #else
     if (stop_cutter_motor() == ESP_OK)
     {
-        ESP_LOGI(TAG, " Event: Cutter disk stopped successfully");
+        ESP_LOGI(TAG, "Event: Cutter disk stopped successfully");
 
         event.event = SOWER_EVENT_CUTTER_STOPPED;
         event.error = SOWER_ERROR_NONE;
@@ -138,14 +139,14 @@ esp_err_t sower_linear_motor_rise_event_handler(void)
 
     if (linear_motor_up() == ESP_OK)
     {
-        event.event = SOWER_EVENT_CUTTER_DOWN;
+        event.event = SOWER_EVENT_CUTTER_UP;
         event.error = SOWER_ERROR_NONE;
         sower_send_to_uart_transmit_queue(event);
     }
     else
     {
         event.event = SOWER_EVENT_ERROR;
-        event.error = SOWER_ERROR_LMOTOR_DONT_DESCEND;
+        event.error = SOWER_ERROR_LMOTOR_DONT_RISE;
         sower_send_to_uart_transmit_queue(event);
 
         return ESP_FAIL;
@@ -163,7 +164,7 @@ esp_err_t sower_linear_motor_descend_event_handler(void)
 
     if (linear_motor_down() == ESP_OK)
     {
-        event.event = SOWER_EVENT_CUTTER_UP;
+        event.event = SOWER_EVENT_CUTTER_DOWN;
         event.error = SOWER_ERROR_NONE;
         sower_send_to_uart_transmit_queue(event);
     }
