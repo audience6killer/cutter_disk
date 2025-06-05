@@ -10,6 +10,7 @@
 #include "control.h"
 #include "sensor_tasks.h"
 #include "uart_communication.h"
+#include "seed_dispenser.h"
 
 #include "esp_log.h"
 
@@ -22,6 +23,9 @@ static QueueHandle_t humedity_queue = NULL;
 static QueueHandle_t temperature_queue = NULL;
 static QueueHandle_t rpm_queue = NULL;
 
+static QueueHandle_t g_seed_dispenser_cmd_queue = NULL;
+static QueueHandle_t g_seed_dispenser_data_queue = NULL;
+
 static void sower_event_handler_loop(void *args);
 static esp_err_t sensor_info_2_uart(sensors_e sensor);
 
@@ -30,6 +34,9 @@ esp_err_t init_tasks()
     // Init velocity task
     init_velocity_sense_task();
     get_velocity_task_queue_handle(&rpm_queue);
+
+    // Start dispenser task
+    seed_dispenser_task_start();
 
     // Init sensors
     init_sensors();
@@ -44,6 +51,18 @@ esp_err_t init_tasks()
     esp32_uart_task_start();
     esp32_uart_get_queue_data_received(&esp32_queue_received);
     esp32_uart_get_queue_data2send(&esp32_queue_send);
+
+    /* Get queues */
+    while (seed_dispenser_get_cmd_queue(&g_seed_dispenser_cmd_queue) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Error: Cannot get seed_dispenser_cmd_queue. Retrying...");
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+    while (seed_dispenser_get_data_queue(&g_seed_dispenser_data_queue) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Error: Cannot get seed_dispenser_data_queue. Retrying...");
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
 
     ESP_LOGI(TAG, "receive_cmd task is initializing...");
     xTaskCreatePinnedToCore(
@@ -182,24 +201,102 @@ esp_err_t sower_linear_motor_descend_event_handler(void)
 
 esp_err_t sower_start_dispenser_event_handler(void)
 {
-    sower_event_t event = {
-        .arg = 0.0f,
-        .error = SOWER_ERROR_NONE,
-        .event = SOWER_EVENT_DISPENSER_STARTED};
+    seed_dispenser_cmd_e cmd = SD_CMD_START;
 
-    sower_send_to_uart_transmit_queue(event);
+    if (xQueueSend(g_seed_dispenser_cmd_queue, &cmd, pdMS_TO_TICKS(100)) != pdTRUE)
+    {
+        ESP_LOGE(TAG, "Error: Cannot send start cmd to dispenser. Retrying...");
+        return ESP_FAIL;
+    }
+
+    seed_dispenser_state_e state;
+    if (xQueueReceive(g_seed_dispenser_data_queue, &state, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+        if (state == SD_STATE_STARTED)
+        {
+            sower_event_t event = {
+                .arg = 0.0f,
+                .error = SOWER_ERROR_NONE,
+                .event = SOWER_EVENT_DISPENSER_STARTED};
+
+            sower_send_to_uart_transmit_queue(event);
+
+            return ESP_OK;
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Error: invalid response for SD_CMD_START");
+            sower_event_t event = {
+                .arg = 0.0f,
+                .error = SOWER_ERROR_DISPENCER_ERROR,
+                .event = SOWER_EVENT_ERROR};
+
+            sower_send_to_uart_transmit_queue(event);
+            return ESP_FAIL;
+        }
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Error: response timeout for SD_CMD_START");
+        sower_event_t event = {
+            .arg = 0.0f,
+            .error = SOWER_ERROR_DISPENCER_ERROR,
+            .event = SOWER_EVENT_ERROR};
+
+        sower_send_to_uart_transmit_queue(event);
+        return ESP_FAIL;
+    }
 
     return ESP_OK;
 }
 
 esp_err_t sower_stop_dispenser_event_handler(void)
 {
-    sower_event_t event = {
-        .arg = 0.0f,
-        .error = SOWER_ERROR_NONE,
-        .event = SOWER_EVENT_DISPENSER_STOPPED};
+    seed_dispenser_cmd_e cmd = SD_CMD_STOP;
 
-    sower_send_to_uart_transmit_queue(event);
+    if (xQueueSend(g_seed_dispenser_cmd_queue, &cmd, pdMS_TO_TICKS(100)) != pdTRUE)
+    {
+        ESP_LOGE(TAG, "Error: Cannot send stop cmd to dispenser. Retrying...");
+        return ESP_FAIL;
+    }
+
+    seed_dispenser_state_e state;
+    if (xQueueReceive(g_seed_dispenser_data_queue, &state, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+        if (state == SD_STATE_STARTED)
+        {
+            sower_event_t event = {
+                .arg = 0.0f,
+                .error = SOWER_ERROR_NONE,
+                .event = SOWER_EVENT_DISPENSER_STOPPED};
+
+            sower_send_to_uart_transmit_queue(event);
+
+            return ESP_OK;
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Error: invalid response for SD_CMD_STOP");
+            sower_event_t event = {
+                .arg = 0.0f,
+                .error = SOWER_ERROR_DISPENCER_ERROR,
+                .event = SOWER_EVENT_ERROR};
+
+            sower_send_to_uart_transmit_queue(event);
+            return ESP_FAIL;
+        }
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Error: response timeout for SD_CMD_STOP");
+        sower_event_t event = {
+            .arg = 0.0f,
+            .error = SOWER_ERROR_DISPENCER_ERROR,
+            .event = SOWER_EVENT_ERROR};
+
+        sower_send_to_uart_transmit_queue(event);
+        return ESP_FAIL;
+    }
 
     return ESP_OK;
 }
@@ -223,7 +320,7 @@ esp_err_t sower_default_event_handler(void)
         .error = SOWER_ERROR_UNKNOWN_CMD,
         .event = SOWER_EVENT_ERROR};
 
-    //sower_send_to_uart_transmit_queue(event);
+    // sower_send_to_uart_transmit_queue(event);
 
     return ESP_OK;
 }
