@@ -262,7 +262,7 @@ static void cutter_pid_task(void *args)
         bdc_motor_set_speed(cutter_motor.motor_handler, (uint32_t)new_speed);
 
 #ifdef CONTROL_TEST
-        printf("/*%0.2f, 400.0, %0.2f, %0.2f*/\r\n", rpms, new_speed, error);
+        //printf("/*%0.2f, 400.0, %0.2f, %0.2f*/\r\n", rpms, new_speed, error);
 #endif
 
 #ifdef ENABLE_LINEAR_MOTOR

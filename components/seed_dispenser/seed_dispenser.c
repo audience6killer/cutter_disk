@@ -102,6 +102,8 @@ static void seed_dispenser_update_task(void *pvParameters)
             bdc_motor_set_speed(g_seed_dispenser_handle->motor, (uint32_t)seed_dispenser_new_speed);
 
             g_seed_dispenser_handle->report_pulses = seed_dispenser_real_pulses;
+
+            printf("pulses: %d\n", g_seed_dispenser_handle->report_pulses);
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
@@ -170,6 +172,8 @@ static void seed_dispenser_task(void *pvParameters)
     ESP_LOGI(TAG, "Initializing task");
 
     g_seed_dispenser_handle = (motor_control_context_t *)malloc(sizeof(motor_control_context_t));
+
+    g_seed_dispenser_handle->desired_speed = SEED_DISPENSER_DESIRED_SPEED;
 
     /* Configure BDC_MOTOR */
     bdc_motor_config_t motor_config = {
@@ -277,7 +281,8 @@ void seed_dispenser_task_start()
 
     g_seed_dispenser_isr_data_queue = xQueueCreate(5, sizeof(int));
     g_seed_dispenser_data_queue = xQueueCreate(5, sizeof(seed_dispenser_state_e));
+    g_seed_dispenser_cmd_queue = xQueueCreate(5, sizeof(seed_dispenser_cmd_e));
 
     xTaskCreatePinnedToCore(seed_dispenser_task, "seed_dispenser", SEED_DISPENSER_STACK_SIZE, NULL, SEED_DISPENSER_TASK_PRIORITY, NULL, SEED_DISPENSER_CORE_ID);
-    xTaskCreatePinnedToCore(seed_dispenser_update_task, "seed_update", 2048, NULL, 15, NULL, 1);
+    xTaskCreatePinnedToCore(seed_dispenser_update_task, "seed_update", 4048, NULL, 15, NULL, 1);
 }
